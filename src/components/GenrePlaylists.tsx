@@ -44,7 +44,12 @@ const GenrePlaylists: React.FC = () => {
     useEffect(() => {
         const fetchSongs = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/songs`);
+                const response = await axios.get(`${API_BASE_URL}/api/songs`, {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
                 const songs: Song[] = response.data;
 
                 // Gruppera låtar efter genre
