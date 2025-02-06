@@ -5,7 +5,7 @@
   "main": "src/server/index.ts",
   "proxy": "http://localhost:3006",
   "scripts": {
-    "start": "NODE_ENV=production ts-node src/server/index.ts",
+    "start": "cross-env NODE_ENV=production ts-node src/server/index.ts",
     "dev": "nodemon src/server/index.ts",
     "dev:client": "react-scripts start",
     "build": "tsc && npm run build:client",
@@ -14,13 +14,14 @@
     "setup-db": "ts-node src/database/setup.ts",
     "update-db": "ts-node src/database/update_schema.ts",
     "import-songs": "ts-node src/scripts/importSongs.ts",
-    "migrate": "ts-node src/database/setup.ts"
+    "migrate": "cross-env NODE_ENV=production ts-node src/database/setup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.743.0",
     "axios": "^1.3.5",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
