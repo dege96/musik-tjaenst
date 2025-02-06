@@ -5,33 +5,35 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const setupDatabase = async () => {
-    // Anslut till postgres för att skapa databasen
-    const setupPool = new Pool({
-        connectionString: process.env.DATABASE_URL?.replace('/musiktjanst', '/postgres'),
-    });
-
-    try {
-        // Skapa databasen om den inte finns
-        await setupPool.query(`
-            SELECT 'CREATE DATABASE musiktjanst'
-            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'musiktjanst')
-        `).then(() => {
-            console.log('Databas skapad eller existerar redan');
-        });
-    } catch (err) {
-        console.error('Fel vid skapande av databas:', err);
-        process.exit(1);
-    } finally {
-        await setupPool.end();
-    }
-
-    // Anslut till den nya databasen
     const pool = new Pool({
         connectionString: process.env.DATABASE_URL,
+        ssl: isProduction ? {
+            rejectUnauthorized: false
+        } : false
     });
 
     try {
+        // I produktion antar vi att databasen redan finns
+        if (!isProduction) {
+            // Skapa databasen bara i utvecklingsmiljö
+            const setupPool = new Pool({
+                connectionString: process.env.DATABASE_URL?.replace('/musiktjanst', '/postgres'),
+            });
+
+            try {
+                await setupPool.query(`
+                    SELECT 'CREATE DATABASE musiktjanst'
+                    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'musiktjanst')
+                `);
+                console.log('Databas skapad eller existerar redan');
+            } finally {
+                await setupPool.end();
+            }
+        }
+
         // Läs och kör migrationer
         const migrationFile = await fs.readFile(
             path.join(__dirname, 'migrations', '001_initial_schema.sql'),
@@ -41,7 +43,7 @@ const setupDatabase = async () => {
         await pool.query(migrationFile);
         console.log('Migrationer körda framgångsrikt');
 
-        // Skapa admin-användare
+        // Skapa admin-användare om den inte finns
         const adminExists = await pool.query(
             "SELECT * FROM users WHERE email = 'admin@musiktjanst.se'"
         );
@@ -70,8 +72,8 @@ const setupDatabase = async () => {
         }
 
     } catch (err) {
-        console.error('Fel vid körning av migrationer:', err);
-        process.exit(1);
+        console.error('Fel vid databasinstallation:', err);
+        throw err;
     } finally {
         await pool.end();
     }

@@ -14,7 +14,7 @@
     "setup-db": "ts-node src/database/setup.ts",
     "update-db": "ts-node src/database/update_schema.ts",
     "import-songs": "ts-node src/scripts/importSongs.ts",
-    "postinstall": "npm run setup-db"
+    "migrate": "ts-node src/database/setup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.743.0",
