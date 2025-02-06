@@ -14,7 +14,11 @@ const port = process.env.PORT || 3004;
 
 // Konfigurera CORS
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://musik-tjaenst.vercel.app'
+    ],
     optionsSuccessStatus: 200
 };
 

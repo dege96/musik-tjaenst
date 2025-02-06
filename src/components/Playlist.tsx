@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
+import { API_BASE_URL } from '../config';
 
 interface Song {
     id: number;
@@ -167,7 +168,7 @@ const PlaylistComponent: React.FC<PlaylistProps> = ({
         setCurrentSong(song.id);
         if (audioRef.current) {
             try {
-                const audioUrl = new URL(song.file_url, window.location.origin).href;
+                const audioUrl = `${API_BASE_URL}${song.file_url}`;
                 audioRef.current.src = audioUrl;
                 audioRef.current.play().catch(error => {
                     console.error('Kunde inte spela låten:', error);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 import PlaylistComponent from './Playlist';
+import { API_BASE_URL } from '../config';
 
 interface Song {
     id: number;
@@ -43,7 +44,7 @@ const GenrePlaylists: React.FC = () => {
     useEffect(() => {
         const fetchSongs = async () => {
             try {
-                const response = await axios.get('/api/songs');
+                const response = await axios.get(`${API_BASE_URL}/api/songs`);
                 const songs: Song[] = response.data;
 
                 // Gruppera låtar efter genre
