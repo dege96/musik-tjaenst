@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createGlobalStyle } from 'styled-components';
-import App from './components/App';
+import App from './App';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -16,7 +16,7 @@ const GlobalStyle = createGlobalStyle`
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #f5f5f7;
+    background: #000000;
   }
 
   code {
@@ -25,9 +25,10 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+
+const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>

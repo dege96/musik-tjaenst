@@ -28,8 +28,23 @@ const corsOptions = {
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    allowedHeaders: [
+        'Content-Type', 
+        'Authorization', 
+        'Origin', 
+        'Accept', 
+        'Range',
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Headers',
+        'Access-Control-Allow-Methods'
+    ],
+    exposedHeaders: [
+        'Content-Range', 
+        'X-Content-Range', 
+        'Content-Length', 
+        'Content-Type',
+        'Accept-Ranges'
+    ],
     maxAge: 600,
     optionsSuccessStatus: 200
 };
@@ -37,16 +52,6 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// Statiska filer
-app.use('/songs', express.static(path.join(process.cwd(), 'public', 'songs'), {
-    setHeaders: (res, filePath) => {
-        if (path.extname(filePath) === '.mp3') {
-            res.set('Content-Type', 'audio/mpeg');
-        }
-    }
-}));
-app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Databasanslutning
 const pool = new Pool({
