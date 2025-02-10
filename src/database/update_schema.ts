@@ -44,7 +44,7 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 0, medium: 10, high: 30, very_high: 60 },
                 songCriteria: {
                     minEnergy: 'high',
-                    preferredGenres: ['electronic', 'rock', 'hip-hop']
+                    preferredGenres: ['dance', 'electronic', 'rock', 'hip-hop']
                 }
             },
             {
@@ -53,11 +53,40 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 30, medium: 60, high: 10, very_high: 0 },
                 songCriteria: {
                     maxEnergy: 'medium',
-                    preferredGenres: ['ambient', 'jazz', 'lofi']
+                    preferredGenres: ['ambient', 'lofi']
                 }
             },
+            {
+                name: 'Party',
+                businessType: 'party',
+                energyProfile: { low: 0, medium: 50, high: 50, very_high: 0 },
+                songCriteria: {
+                    minEnergy: 'high',
+                    preferredGenres: ['electronic', 'pop', 'hip-hop']
+                }
+            },
+            {
+                name: 'Spa',
+                businessType: 'spa',
+                energyProfile: { low: 80, medium: 20, high: 0, very_high: 0 },
+                songCriteria: {
+                    maxEnergy: 'low',
+                    preferredGenres: ['ambient', 'meditation', 'classical']
+                }
+            },
+            {
+                name: 'Café',
+                businessType: 'cafe',
+                energyProfile: { low: 40, medium: 60, high: 0, very_high: 0 },
+                songCriteria: {
+                    maxEnergy: 'medium',
+                    preferredGenres: ['jazz', 'lofi', 'acoustic']
+                }
+            }
         ];
     }
+
+
 
     private async createDatabaseSchema(): Promise<void> {
         const client = await this.pool.connect();
@@ -81,6 +110,7 @@ class PlaylistTemplateManager {
                 CREATE TABLE IF NOT EXISTS playlists (
                     id SERIAL PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
+                    owner_id INT REFERENCES users(id) ON DELETE CASCADE, -- Referens till användaren
                     business_type VARCHAR(100) NOT NULL,
                     energy_profile JSONB NOT NULL,
                     is_template BOOLEAN DEFAULT false,
@@ -88,6 +118,7 @@ class PlaylistTemplateManager {
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
+
 
                 CREATE TABLE IF NOT EXISTS songs (
                     id SERIAL PRIMARY KEY,
