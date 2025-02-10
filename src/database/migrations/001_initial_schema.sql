@@ -1,10 +1,21 @@
--- Användartyper
-CREATE TYPE user_role AS ENUM ('admin', 'business');
-CREATE TYPE energy_level AS ENUM ('low', 'medium', 'high');
-CREATE TYPE business_type AS ENUM ('gym', 'cafe', 'retail', 'restaurant', 'office', 'other');
+-- Skapa typer om de inte finns
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM ('admin', 'business');
+    END IF;
 
--- Användartabell (Företag)
-CREATE TABLE users (
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'energy_level') THEN
+        CREATE TYPE energy_level AS ENUM ('low', 'medium', 'high', 'very_high');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'business_type') THEN
+        CREATE TYPE business_type AS ENUM ('gym', 'cafe', 'retail', 'restaurant', 'office', 'other');
+    END IF;
+END $$;
+
+-- Skapa tabeller om de inte finns
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -18,7 +29,7 @@ CREATE TABLE users (
 );
 
 -- Låtar
-CREATE TABLE songs (
+CREATE TABLE IF NOT EXISTS songs (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     genre VARCHAR(255) NOT NULL,
@@ -31,7 +42,7 @@ CREATE TABLE songs (
 );
 
 -- Företagsanpassade spellistor
-CREATE TABLE playlists (
+CREATE TABLE IF NOT EXISTS playlists (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     created_by INTEGER REFERENCES users(id),
@@ -43,7 +54,7 @@ CREATE TABLE playlists (
 );
 
 -- Spellistans låtar
-CREATE TABLE playlist_songs (
+CREATE TABLE IF NOT EXISTS playlist_songs (
     playlist_id INTEGER REFERENCES playlists(id),
     song_id INTEGER REFERENCES songs(id),
     position INTEGER NOT NULL,
@@ -51,7 +62,7 @@ CREATE TABLE playlist_songs (
 );
 
 -- Användningstatistik
-CREATE TABLE usage_statistics (
+CREATE TABLE IF NOT EXISTS usage_statistics (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     song_id INTEGER REFERENCES songs(id),
@@ -61,7 +72,7 @@ CREATE TABLE usage_statistics (
 );
 
 -- Betalningshistorik
-CREATE TABLE payment_history (
+CREATE TABLE IF NOT EXISTS payment_history (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     amount DECIMAL(10,2) NOT NULL,
@@ -73,7 +84,7 @@ CREATE TABLE payment_history (
 );
 
 -- Användarinställningar
-CREATE TABLE user_settings (
+CREATE TABLE IF NOT EXISTS user_settings (
     user_id INTEGER PRIMARY KEY REFERENCES users(id),
     preferred_energy_level energy_level,
     shuffle_enabled BOOLEAN DEFAULT false,

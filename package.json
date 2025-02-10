@@ -6,6 +6,7 @@
   "proxy": "http://localhost:3006",
   "scripts": {
     "start": "cross-env NODE_ENV=production ts-node src/server/index.ts",
+    "git": "git add . && git commit -m \"commit message\" && git push",
     "dev": "nodemon src/server/index.ts",
     "dev:client": "cross-env PORT=3007 react-scripts start",
     "build": "tsc && npm run build:client",
