@@ -12,45 +12,38 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3006;
 
-// Konfigurera CORS
-const corsOptions = {
-    origin: process.env.CORS_ORIGIN?.split(',') || [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:3003',
-        'http://localhost:3004',
-        'http://localhost:3005',
-        'http://localhost:3006',
-        'http://localhost:3007',
-        'http://localhost:3008',
-        'https://musik-tjaenst.vercel.app'
-    ],
+// CORS konfiguration
+const allowedOrigins = [
+    'http://localhost:3007',
+    'http://localhost:3000',
+    'https://musik-tjaenst.vercel.app',
+    'https://musik-tjaenst-production.up.railway.app'
+];
+
+// Om CORS_ORIGIN är satt som kommaseparerad lista, lägg till dessa också
+if (process.env.CORS_ORIGIN) {
+    const corsOrigins = process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    allowedOrigins.push(...corsOrigins);
+}
+
+app.use(cors({
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('Blocked origin:', origin); // För debugging
+            const msg = 'CORS policy på denna sida tillåter inte access från den här ursprungsdomänen.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type', 
-        'Authorization', 
-        'Origin', 
-        'Accept', 
-        'Range',
-        'Access-Control-Allow-Origin',
-        'Access-Control-Allow-Headers',
-        'Access-Control-Allow-Methods'
-    ],
-    exposedHeaders: [
-        'Content-Range', 
-        'X-Content-Range', 
-        'Content-Length', 
-        'Content-Type',
-        'Accept-Ranges'
-    ],
-    maxAge: 600,
-    optionsSuccessStatus: 200
-};
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 
 // Databasanslutning
@@ -93,7 +86,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
         console.log(`Server körs på port ${port}`);
-        console.log(`CORS tillåter anslutningar från: ${corsOptions.origin.join(', ')}`);
+        console.log(`CORS tillåter anslutningar från: ${allowedOrigins.join(', ')}`);
     });
 }
 

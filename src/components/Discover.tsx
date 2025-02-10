@@ -173,7 +173,12 @@ const Discover: React.FC<DiscoverProps> = ({ onPlaySong, currentlyPlaying }) => 
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/api/songs`);
+      const response = await fetch(`${API_BASE_URL}/api/songs`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
         throw new Error('Kunde inte hämta låtar');
