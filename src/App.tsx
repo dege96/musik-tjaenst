@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled from 'styled-components';
 import { Search } from 'react-feather';
@@ -121,8 +121,23 @@ const PlayerWrapper = styled.div`
   height: 90px;
 `;
 
+interface Song {
+  id: number;
+  title: string;
+  genre: string;
+  file_url: string;
+  energy_level: 'low' | 'medium' | 'high' | 'very_high';
+  duration: number;
+}
+
 const App: React.FC = () => {
-  const isAdmin = true; // Temporärt för utveckling
+  const [currentSong, setCurrentSong] = useState<Song | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlaySong = (song: Song) => {
+    setCurrentSong(song);
+    setIsPlaying(true);
+  };
 
   return (
     <Router>
@@ -138,7 +153,6 @@ const App: React.FC = () => {
             <UserControls>
               <NavButton href="/premium">Premium</NavButton>
               <NavButton href="/support">Support</NavButton>
-              <NavButton href="/download">Download</NavButton>
               <SignUpButton>Sign up</SignUpButton>
               <LogInButton>Log in</LogInButton>
             </UserControls>
@@ -147,17 +161,23 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<OfficialPlaylists />} />
             <Route path="/official-playlists" element={<OfficialPlaylists />} />
-            <Route path="/discover" element={<Discover />} />
-            {/* <Route path="/schedule" element={<Schedule />} /> */}
-            <Route path="/playlists" element={<GenrePlaylists />} />
-            {/* {isAdmin && (
-              <Route path="/admin/songs" element={<AdminSongs />} />
-            )} */}
+            <Route 
+              path="/discover" 
+              element={<Discover onPlaySong={handlePlaySong} currentlyPlaying={currentSong?.id ?? null} />} 
+            />
+            <Route 
+              path="/playlists/:businessType" 
+              element={<GenrePlaylists onPlaySong={handlePlaySong} currentlyPlaying={currentSong?.id ?? null} />} 
+            />
           </Routes>
         </MainContent>
 
         <PlayerWrapper>
-          <Player />
+          <Player 
+            currentSong={currentSong}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+          />
         </PlayerWrapper>
       </AppContainer>
     </Router>

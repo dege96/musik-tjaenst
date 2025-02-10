@@ -44,7 +44,7 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 0, medium: 10, high: 30, very_high: 60 },
                 songCriteria: {
                     minEnergy: 'high',
-                    preferredGenres: ['dance', 'electronic', 'rock', 'hip-hop']
+                    preferredGenres: ['Dance', 'Trap', 'Drum and bass']
                 }
             },
             {
@@ -53,16 +53,16 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 30, medium: 60, high: 10, very_high: 0 },
                 songCriteria: {
                     maxEnergy: 'medium',
-                    preferredGenres: ['ambient', 'lofi']
+                    preferredGenres: ['Beat', 'Lounge']
                 }
             },
             {
                 name: 'Party',
                 businessType: 'party',
-                energyProfile: { low: 0, medium: 50, high: 50, very_high: 0 },
+                energyProfile: { low: 0, medium: 20, high: 40, very_high: 40 },
                 songCriteria: {
                     minEnergy: 'high',
-                    preferredGenres: ['electronic', 'pop', 'hip-hop']
+                    preferredGenres: ['Dance', 'Trap']
                 }
             },
             {
@@ -71,7 +71,7 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 80, medium: 20, high: 0, very_high: 0 },
                 songCriteria: {
                     maxEnergy: 'low',
-                    preferredGenres: ['ambient', 'meditation', 'classical']
+                    preferredGenres: ['Lounge', 'Beat']
                 }
             },
             {
@@ -80,20 +80,18 @@ class PlaylistTemplateManager {
                 energyProfile: { low: 40, medium: 60, high: 0, very_high: 0 },
                 songCriteria: {
                     maxEnergy: 'medium',
-                    preferredGenres: ['jazz', 'lofi', 'acoustic']
+                    preferredGenres: ['Beat', 'Lounge']
                 }
             }
         ];
     }
-
-
 
     private async createDatabaseSchema(): Promise<void> {
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
 
-            // Drop existing tables and types
+            // Drop everything first
             await client.query(`
                 DROP TABLE IF EXISTS playlist_songs CASCADE;
                 DROP TABLE IF EXISTS songs CASCADE;
@@ -101,16 +99,16 @@ class PlaylistTemplateManager {
                 DROP TYPE IF EXISTS energy_level CASCADE;
             `);
 
-            // Create new enum type
+            // Create enum type
             await client.query(`
                 CREATE TYPE energy_level AS ENUM ('low', 'medium', 'high', 'very_high');
             `);
 
+            // Create tables
             await client.query(`
                 CREATE TABLE IF NOT EXISTS playlists (
                     id SERIAL PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
-                    owner_id INT REFERENCES users(id) ON DELETE CASCADE, -- Referens till användaren
                     business_type VARCHAR(100) NOT NULL,
                     energy_profile JSONB NOT NULL,
                     is_template BOOLEAN DEFAULT false,
@@ -118,7 +116,6 @@ class PlaylistTemplateManager {
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
-
 
                 CREATE TABLE IF NOT EXISTS songs (
                     id SERIAL PRIMARY KEY,
@@ -145,6 +142,7 @@ class PlaylistTemplateManager {
             `);
 
             await client.query('COMMIT');
+            console.log('Schema created successfully');
         } catch (error) {
             await client.query('ROLLBACK');
             throw new Error(`Schema creation failed: ${error}`);
@@ -194,17 +192,22 @@ class PlaylistTemplateManager {
             const playlistId = playlistResult.rows[0].id;
             const energyLevels = this.getEnergyLevels(template.songCriteria);
 
-            // Find matching songs
+            console.log(`Finding songs for ${template.name} with energy levels:`, energyLevels);
+            console.log(`And genres:`, template.songCriteria.preferredGenres);
+
+            // Find matching songs with case-insensitive genre matching
             const songsResult = await client.query(
-                `SELECT id 
+                `SELECT id, title, genre, energy_level 
                  FROM songs 
-                 WHERE energy_level = ANY($1)
-                 AND genre = ANY($2)
+                 WHERE energy_level = ANY($1::energy_level[])
+                 AND LOWER(genre) = ANY(SELECT LOWER(UNNEST($2::text[])))
                  AND is_active = true
                  ORDER BY RANDOM()
                  LIMIT 50`,
                 [energyLevels, template.songCriteria.preferredGenres]
             );
+
+            console.log(`Found ${songsResult.rows.length} songs for ${template.name}:`, songsResult.rows);
 
             // Add songs to playlist
             if (songsResult.rows.length > 0) {
@@ -222,6 +225,7 @@ class PlaylistTemplateManager {
             console.log(`Created template: ${template.name} with ${songsResult.rows.length} songs`);
         } catch (error) {
             await client.query('ROLLBACK');
+            console.error(`Error creating template ${template.name}:`, error);
             throw new Error(`Failed to create template ${template.name}: ${error}`);
         } finally {
             client.release();
@@ -230,16 +234,44 @@ class PlaylistTemplateManager {
 
     public async initialize(): Promise<void> {
         try {
-            await this.createDatabaseSchema();
-            
-            for (const template of this.templates) {
-                const validatedTemplate = TemplatePlaylistSchema.parse(template);
-                await this.createTemplatePlaylist(validatedTemplate);
+            const args = process.argv.slice(2);
+            const command = args[0];
+
+            if (command === 'create-schema') {
+                await this.createDatabaseSchema();
+                console.log('Schema created successfully. Now run:');
+                console.log('1. npm run import-songs');
+                console.log('2. npm run update-db create-templates');
+            } 
+            else if (command === 'create-templates') {
+                // Check if we have songs in the database
+                const client = await this.pool.connect();
+                try {
+                    const result = await client.query('SELECT COUNT(*) as count FROM songs');
+                    if (result.rows[0].count === 0) {
+                        console.log('No songs found in database. Please run npm run import-songs first.');
+                        return;
+                    }
+
+                    // Delete existing templates
+                    await client.query('DELETE FROM playlists WHERE is_template = true');
+
+                    // Create new templates
+                    for (const template of this.templates) {
+                        const validatedTemplate = TemplatePlaylistSchema.parse(template);
+                        await this.createTemplatePlaylist(validatedTemplate);
+                    }
+                    
+                    console.log('Template creation completed successfully');
+                } finally {
+                    client.release();
+                }
             }
-            
-            console.log('Template initialization completed successfully');
+            else {
+                console.log('Please specify a command: create-schema or create-templates');
+            }
         } catch (error) {
-            console.error('Template initialization failed:', error);
+            console.error('Operation failed:', error);
             throw error;
         }
     }

@@ -28,7 +28,7 @@ const AddSongSchema = z.object({
 });
 
 // Database service
-class PlaylistService {
+export class PlaylistService {
     private pool: Pool;
 
     constructor(connectionString: string) {

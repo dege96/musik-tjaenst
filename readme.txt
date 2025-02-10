@@ -1,15 +1,33 @@
 //installs
-npm install
-npm install react-feather
+npm install                         // Installerar alla projektets beroenden från package.json
+npm install react-feather           // Installerar ikonbiblioteket react-feather
 
+//development
+npm run dev                         // Startar backend-servern i utvecklingsläge med automatisk omstart
+npm run dev:client                  // Startar React-appen i utvecklingsläge på port 3007
 
-//lista och analysera alla MP3-filer i din S3-bucket genom att köra:
-npm run list-s3
+//database setup & migrations
+npm run setup-db                    // Skapar initial databasstruktur och admin-användare
+npm run update-db                   // Uppdaterar databasschemat och skapar mallspellistor
+npm run migrate                     // Kör databasmigrationer i produktionsmiljö
 
-//importerar låtar från din lokala katalog genom att köra & uppdaterar databasen genom att köra:
-npm run update-db
-npm run import-songs
+//songs management
+npm run list-s3                     // Listar alla låtar som finns lagrade i AWS S3
+npm run update-db create-schema     // Skapar databasschemat
+npm run import-songs                // Importerar låtar från S3 till databasen med metadata
+npm run update-db create-templates  // Skapar fördefinierade spellistmallar
 
+//testing
+npm test                            // Skapar testdatabas och kör alla tester
+npm run test:watch                  // Kör tester i watch-läge (kör om när filer ändras)
+npm run test:coverage               // Kör tester och genererar kodtäckningsrapport
+
+//build
+npm run build                       // Bygger både backend (TypeScript) och frontend
+npm run build:client                // Bygger endast frontend-delen (React-appen)
+
+//production
+npm start                           // Startar servern i produktionsläge
 
 Funktionalitet för administratör:
 - Streama låtar: Låtar streamas från CloudFront, vilket ger snabbare leverans.

@@ -124,7 +124,7 @@ class SongImporter {
         return 'medium';
     }
 
-    private async processSongFile(fileName: string, genre: string): Promise<SongData | null> {
+    private async processSongFile(fileName: string): Promise<SongData | null> {
         try {
             const fileData = await this.s3Client.send(new GetObjectCommand({
                 Bucket: this.config.aws.bucketName,
@@ -137,6 +137,11 @@ class SongImporter {
 
             const fileBuffer = await this.streamToBuffer(fileData.Body);
             const tags = NodeID3.read(fileBuffer) as SongTags;
+            
+            // Extract genre from file path
+            const genreMatch = fileName.match(/songs\/([^/]+)\//);
+            const genre = genreMatch ? genreMatch[1] : 'Unknown';
+            
             const title = tags.title || path.basename(fileName, '.mp3');
 
             // Process duration
@@ -228,10 +233,7 @@ class SongImporter {
                 const batchPromises = batch.map(async (item) => {
                     if (!item.Key) return;
                     
-                    const pathParts = item.Key.split('/');
-                    const genre = pathParts[1];
-                    
-                    const songData = await this.processSongFile(item.Key, genre);
+                    const songData = await this.processSongFile(item.Key);
                     if (songData) {
                         const saved = await this.saveSongToDatabase(songData);
                         if (saved) {

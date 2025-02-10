@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import axios from 'axios';
 import PlaylistComponent from './Playlist';
 import { API_BASE_URL } from '../config';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { Play, Shuffle, Download, Repeat, Share2, MoreHorizontal } from 'react-feather';
 
 
@@ -31,6 +31,11 @@ interface GenrePlaylist {
 
 interface ControlButtonProps {
     active?: boolean;
+}
+
+interface GenrePlaylistsProps {
+    onPlaySong: (song: Song) => void;
+    currentlyPlaying: number | null;
 }
 
 const Container = styled.div`
@@ -178,7 +183,7 @@ const LoadingMessage = styled.div`
     font-size: 14px;
 `;
 
-const GenrePlaylists: React.FC = () => {
+const GenrePlaylists: React.FC<GenrePlaylistsProps> = ({ onPlaySong, currentlyPlaying }) => {
     const [playlists, setPlaylists] = useState<GenrePlaylist[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -189,63 +194,63 @@ const GenrePlaylists: React.FC = () => {
     const searchParams = new URLSearchParams(location.search);
     const filterType = searchParams.get('type') || '';
     const filterValue = searchParams.get('value') || '';
+    const { businessType } = useParams<{ businessType: string }>();
 
     useEffect(() => {
-        const fetchSongs = async () => {
+        const fetchPlaylists = async () => {
+            if (!businessType) {
+                setError('Ingen spellista specificerad');
+                return;
+            }
+
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get(`${API_BASE_URL}/api/songs`, {
+                const response = await axios.get(`${API_BASE_URL}/api/playlists`, {
+                    params: {
+                        is_template: true
+                    },
                     withCredentials: true,
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
-                const songs: Song[] = response.data;
+                
+                // Filtrera spellistor baserat på business_type och konvertera till rätt format
+                const allPlaylists = response.data;
+                const matchingPlaylist = allPlaylists.find((p: any) => 
+                    p.business_type === businessType || 
+                    p.name.toLowerCase() === businessType.replace(/_/g, ' ')
+                );
 
-                // Gruppera låtar efter genre
-                const songsByGenre = songs.reduce((acc, song) => {
-                    if (!acc[song.genre]) {
-                        acc[song.genre] = [];
-                    }
-                    acc[song.genre].push({
-                        ...song,
-                        file_url: song.file_url.startsWith('http') 
-                            ? song.file_url 
-                            : `https://d3ay0m1fmlct6z.cloudfront.net${song.file_url}`
-                    });
-                    return acc;
-                }, {} as Record<string, Song[]>);
-
-                // Skapa spellistor för varje genre
-                const genrePlaylists = Object.entries(songsByGenre)
-                    .filter(([_, songs]) => songs.length > 0)
-                    .map(([genre, songs], index) => ({
-                        id: index + 1,
-                        name: genre,
-                        songs: songs.filter(song => song.is_active),
-                        energy_profile: {
-                            low: songs.filter(s => s.energy_level === 'low').length,
-                            medium: songs.filter(s => s.energy_level === 'medium').length,
-                            high: songs.filter(s => s.energy_level === 'high').length,
-                            very_high: songs.filter(s => s.energy_level === 'very_high').length
-                        }
-                    }));
-
-                setPlaylists(genrePlaylists);
+                if (matchingPlaylist) {
+                    // Konvertera playlist-formatet
+                    const formattedPlaylist: GenrePlaylist = {
+                        id: matchingPlaylist.id,
+                        name: matchingPlaylist.name,
+                        songs: matchingPlaylist.songs || [],
+                        energy_profile: matchingPlaylist.energy_profile
+                    };
+                    setPlaylists([formattedPlaylist]);
+                } else {
+                    setError('Kunde inte hitta spellistan');
+                }
                 setLoading(false);
             } catch (error) {
-                console.error('Kunde inte hämta låtar:', error);
-                setError('Kunde inte ladda låtarna. Försök igen senare.');
+                console.error('Kunde inte hämta spellistor:', error);
+                setError('Kunde inte ladda spellistan. Försök igen senare.');
                 setLoading(false);
             }
         };
 
-        fetchSongs();
-    }, []);
+        fetchPlaylists();
+    }, [businessType]);
 
     const handlePlay = (songId: number) => {
-        console.log('Spelar låt:', songId);
+        const song = playlists[0].songs.find(s => s.id === songId);
+        if (song) {
+            onPlaySong(song);
+        }
     };
 
     const handleShuffle = () => {
@@ -268,6 +273,12 @@ const GenrePlaylists: React.FC = () => {
             .then(() => alert('Länk kopierad till urklipp!'))
             .catch(err => console.error('Kunde inte kopiera länk:', err));
         setShowDropdown(false);
+    };
+
+    const handlePlayButtonClick = () => {
+        if (playlists[0].songs.length > 0) {
+            onPlaySong(playlists[0].songs[0]);
+        }
     };
 
     if (loading) {
@@ -299,7 +310,7 @@ const GenrePlaylists: React.FC = () => {
 
 
             <PlaylistControls>
-                <PlayButton><Play /></PlayButton>
+                <PlayButton onClick={handlePlayButtonClick}><Play /></PlayButton>
                 <ControlButton 
                     onClick={handleShuffle}
                     active={isShuffleOn}

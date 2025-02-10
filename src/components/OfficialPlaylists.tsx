@@ -99,7 +99,8 @@ const OfficialPlaylists: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCardClick = (type: string, value: string) => {
-    navigate(`/playlists?${type}=${value.toLowerCase()}`);
+    const businessType = value.toLowerCase().replace(/\s+/g, '_');
+    navigate(`/playlists/${businessType}`);
   };
 
   return (

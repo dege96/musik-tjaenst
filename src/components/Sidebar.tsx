@@ -192,7 +192,10 @@ const Sidebar: React.FC = () => {
       <PlaylistsSection>
         <PlaylistTitle>Your Playlists</PlaylistTitle>
         {playlists.map(playlist => (
-          <PlaylistItem key={playlist.id} to={`/playlist/${playlist.id}`}>
+          <PlaylistItem 
+            key={playlist.id} 
+            to={`/playlists/${playlist.name.toLowerCase().replace(/é/g, 'e')}`}
+          >
             {playlist.icon}
             {playlist.name}
           </PlaylistItem>

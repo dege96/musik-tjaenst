@@ -129,9 +129,6 @@ const PlaylistComponent: React.FC<PlaylistProps> = ({
     playlist,
     onPlay
 }) => {
-    const [currentSong, setCurrentSong] = useState<number | null>(null);
-    const audioRef = useRef<HTMLAudioElement>(null);
-
     const formatDuration = (seconds: number): string => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
@@ -139,11 +136,6 @@ const PlaylistComponent: React.FC<PlaylistProps> = ({
     };
 
     const handlePlay = (song: Song) => {
-        setCurrentSong(song.id);
-        if (audioRef.current) {
-            audioRef.current.src = song.file_url;
-            audioRef.current.play().catch(console.error);
-        }
         onPlay(song.id);
     };
 
@@ -161,11 +153,11 @@ const PlaylistComponent: React.FC<PlaylistProps> = ({
                 {playlist.songs.map((song, index) => (
                     <SongRow
                         key={song.id}
-                        isPlaying={currentSong === song.id}
+                        isPlaying={false}
                         onClick={() => handlePlay(song)}
                     >
                         <PlayingIndicator>
-                            {currentSong === song.id ? '▶' : (index + 1)}
+                            {index + 1}
                         </PlayingIndicator>
                         <SongInfo>
                             <SongThumbnail />
@@ -184,13 +176,6 @@ const PlaylistComponent: React.FC<PlaylistProps> = ({
                     </SongRow>
                 ))}
             </SongList>
-
-            <audio
-                ref={audioRef}
-                onEnded={() => setCurrentSong(null)}
-                onError={() => setCurrentSong(null)}
-                style={{ display: 'none' }}
-            />
         </PlaylistContainer>
     );
 };

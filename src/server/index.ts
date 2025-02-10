@@ -10,7 +10,7 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3004;
+const port = process.env.PORT || 3006;
 
 // Konfigurera CORS
 const corsOptions = {
@@ -75,6 +75,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date() });
 });
 
+if (process.env.NODE_ENV === 'development') {
+    console.log('Körs i utvecklingsläge');
+} else {
+    console.log('Körs i produktionsläge');
+}
+
 // Felhantering
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(err.stack);
@@ -84,8 +90,11 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
     });
 });
 
-// Starta servern
-app.listen(port, () => {
-    console.log(`Server körs på port ${port}`);
-    console.log(`CORS tillåter anslutningar från: ${corsOptions.origin.join(', ')}`);
-}); 
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(port, () => {
+        console.log(`Server körs på port ${port}`);
+        console.log(`CORS tillåter anslutningar från: ${corsOptions.origin.join(', ')}`);
+    });
+}
+
+export { app }; 

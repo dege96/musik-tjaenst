@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Play, Shuffle, Download, Share2, MoreHorizontal, Search, Clock } from 'react-feather';
 import { API_BASE_URL } from '../config';
@@ -76,6 +76,7 @@ const SongRow = styled.div`
   align-items: center;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
 
   &:hover {
     background: #282828;
@@ -113,6 +114,8 @@ const EnergyBadge = styled.span<{ level: 'low' | 'medium' | 'high' | 'very_high'
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+  display: inline-block;
+  width: fit-content;
   background: ${props => {
     switch (props.level) {
       case 'low': return 'rgba(29, 185, 84, 0.1)';
@@ -141,7 +144,12 @@ interface Song {
   is_active: boolean;
 }
 
-const Discover: React.FC = () => {
+interface DiscoverProps {
+  onPlaySong: (song: Song) => void;
+  currentlyPlaying: number | null;
+}
+
+const Discover: React.FC<DiscoverProps> = ({ onPlaySong, currentlyPlaying }) => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -172,7 +180,14 @@ const Discover: React.FC = () => {
       }
       
       const data = await response.json();
-      setSongs(data);
+      // Säkerställ att alla låtar har kompletta URL:er
+      const songsWithFullUrls = data.map((song: Song) => ({
+        ...song,
+        file_url: song.file_url.startsWith('http') 
+          ? song.file_url 
+          : `https://d3ay0m1fmlct6z.cloudfront.net${song.file_url}`
+      }));
+      setSongs(songsWithFullUrls);
       setLoading(false);
     } catch (error) {
       console.error('Fel vid hämtning av låtar:', error);
@@ -184,6 +199,10 @@ const Discover: React.FC = () => {
   useEffect(() => {
     loadSongs();
   }, []);
+
+  const handlePlay = (song: Song) => {
+    onPlaySong(song);
+  };
 
   return (
     <Container>
@@ -208,8 +227,8 @@ const Discover: React.FC = () => {
 
       <SongList>
         {songs.map((song, index) => (
-          <SongRow key={song.id}>
-            <SongNumber>{index + 1}</SongNumber>
+          <SongRow key={song.id} onClick={() => handlePlay(song)}>
+            <SongNumber>{currentlyPlaying === song.id ? '▶' : (index + 1)}</SongNumber>
             <SongInfo>
               <SongImage />
               <div>

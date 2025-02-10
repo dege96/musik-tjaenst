@@ -1,19 +1,17 @@
-import express from 'express';
-import NodeID3 from 'node-id3';
+import express, { Request, Response } from 'express';
 import path from 'path';
-import fs from 'fs/promises';
 import pool from '../../database/connection';
 
 const router = express.Router();
 
 // Hämta alla låtar
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const result = await pool.query(
             'SELECT * FROM songs ORDER BY title ASC'
         );
         
-        // Lägg till fullständig URL för varje låt och hantera specialtecken
+        // Lägg till fullständig URL för varje låt
         const songs = result.rows.map(song => ({
             ...song,
             file_url: `/songs/${encodeURIComponent(song.genre)}/${encodeURIComponent(path.basename(song.file_url))}`
@@ -27,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // Uppdatera låtinformation (endast admin)
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, genre, energy_level, is_active, duration } = req.body;
 
@@ -51,17 +49,18 @@ router.put('/:id', async (req, res) => {
         // Lägg till fullständig URL i svaret
         const song = {
             ...result.rows[0],
-            file_url: `/songs/${result.rows[0].file_url}`
+            file_url: `/songs/${encodeURIComponent(path.basename(result.rows[0].file_url))}`
         };
 
         res.json(song);
     } catch (err) {
+        console.error('Fel vid uppdatering av låt:', err);
         res.status(500).json({ error: 'Kunde inte uppdatera låten' });
     }
 });
 
 // Hämta låtar efter energinivå
-router.get('/energy/:level', async (req, res) => {
+router.get('/energy/:level', async (req: Request, res: Response) => {
     const { level } = req.params;
 
     try {
@@ -73,13 +72,14 @@ router.get('/energy/:level', async (req, res) => {
         // Lägg till fullständig URL för varje låt
         const songs = result.rows.map(song => ({
             ...song,
-            file_url: `/songs/${song.file_url}`
+            file_url: `/songs/${encodeURIComponent(path.basename(song.file_url))}`
         }));
 
         res.json(songs);
     } catch (err) {
+        console.error('Fel vid hämtning av låtar efter energinivå:', err);
         res.status(500).json({ error: 'Kunde inte hämta låtar' });
     }
 });
 
-export default router; 
+export default router;
