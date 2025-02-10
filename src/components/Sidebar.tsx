@@ -6,7 +6,7 @@ import {
   Calendar, 
   PlusSquare, 
   Music,
-  Briefcase,
+  Moon,
   Coffee,
   Activity,
   Sun,
@@ -151,7 +151,7 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const playlists: Playlist[] = [
     { id: 1, name: 'Gym', icon: <Activity size={16} /> },
-    { id: 2, name: 'Office', icon: <Briefcase size={16} /> },
+    { id: 2, name: 'Bar', icon: <Moon size={16} /> },
     { id: 3, name: 'Party', icon: <Music size={16} /> },
     { id: 4, name: 'Spa', icon: <Sun size={16} /> },
     { id: 5, name: 'Café', icon: <Coffee size={16} /> },

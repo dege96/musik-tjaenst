@@ -82,10 +82,11 @@ const CardTitle = styled.div`
 
 const areas = [
   { id: 1, name: 'Gym' },
-  { id: 2, name: 'Office' },
+  { id: 2, name: 'Bar' },
   { id: 3, name: 'Party' },
   { id: 4, name: 'Spa' },
   { id: 5, name: 'Cafe' }
+
 ];
 
 const energyLevels = [

@@ -24,7 +24,10 @@ async function setupTestDatabase() {
 
         // Anslut till testdatabasen
         const testPool = new Pool({
-            connectionString: process.env.TEST_DATABASE_URL
+            connectionString: process.env.TEST_DATABASE_URL,
+            ssl: process.env.NODE_ENV === 'production' ? {
+                rejectUnauthorized: false
+            } : false
         });
 
         // Skapa schema och testdata

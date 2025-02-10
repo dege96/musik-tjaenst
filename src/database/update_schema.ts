@@ -48,9 +48,9 @@ class PlaylistTemplateManager {
                 }
             },
             {
-                name: 'Office',
-                businessType: 'office',
-                energyProfile: { low: 30, medium: 60, high: 10, very_high: 0 },
+                name: 'Resturant',
+                businessType: 'resturant',
+                energyProfile: { low: 40, medium: 60, high: 0, very_high: 0 },
                 songCriteria: {
                     maxEnergy: 'medium',
                     preferredGenres: ['Beat', 'Lounge']
