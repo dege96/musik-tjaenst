@@ -179,7 +179,11 @@ const Discover: React.FC<DiscoverProps> = ({ onPlaySong, currentlyPlaying }) => 
           'Content-Type': 'application/json'
         }
       });
-      
+
+      console.log(response);
+
+
+
       if (!response.ok) {
         throw new Error('Kunde inte hämta låtar');
       }

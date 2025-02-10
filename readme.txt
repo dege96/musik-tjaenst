@@ -1,8 +1,12 @@
+//git update
+npm run git
+
 //installs
 npm install                         // Installerar alla projektets beroenden från package.json
 npm install react-feather           // Installerar ikonbiblioteket react-feather
 
 //development
+
 npm run dev                         // Startar backend-servern i utvecklingsläge med automatisk omstart
 npm run dev:client                  // Startar React-appen i utvecklingsläge på port 3007
 
